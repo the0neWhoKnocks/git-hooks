@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# This pre-commit hook will prevent any commit to forbidden branches
+# (by default, "release", "master", & "develop").
+# Put this file in your local repo, in the .git/hooks folder
+# and make sure it is executable.
+# The name of the file *must* be "pre-commit" for Git to pick it up.
+
+# add a space and "branch_name" to add to the Array 
+declare -a FORBIDDEN_BRANCHES=("release" "master" "develop")
+branch=$(echo `git rev-parse --abbrev-ref=strict HEAD`)
+
+## now loop through the above array
+for i in "${FORBIDDEN_BRANCHES[@]}"
+do
+	if [[ $branch =~ $i* ]] ;
+	then
+		len=`expr 27 - ${#i}`
+		spaces=""
+		for j in $(eval echo "{1..$len}"); do spaces+=" "; done
+		
+		echo;
+		echo " ============================================================================ "
+		echo " ||                                                                        || " 
+		echo " ||                                     II                                 || "
+		echo " ||                                  IIIIIII                               || "
+		echo " ||                               IIIIIIIIIII                              || "
+		echo " ||                             IIIIIIIIIIIIIIII                           || "
+		echo " ||                          IIIIIIIIIIIIIIIIIIIIII                        || "
+		echo " ||                        IIIIIIIIIIIIIIIIIIIIIIIIII                      || "
+		echo " ||                      NNIIIIIIIIIII!IIIIIIIIIIIIIII                     || "
+		echo " ||                      NNNNNIIIIII!!!!NNNNIIIIIII!!!                     || "
+		echo " ||                      NNNNNNNN♦!!!!!!NNNNNN♦III!!!!                     || "
+		echo " ||                 II   NNNNNNNN♦!!!!!!NNNNNN♦!!!!!!!     II              || "
+		echo " ||              IIIIIII NNNNNNNN♦!!!!!!NNNNNN♦!!!!!!!  IIIIIII            || "
+		echo " ||           IIIIIIIIIIIIINNNNNN♦!!!!!!INNNNN♦!!!!!!IIIIIIIIIIII          || "
+		echo " ||        IIIIIIIIIIIIIIIIIINNNN♦!!!IIIIINNNN♦!!!!IIIIIIIIIIIIIIIII       || "
+		echo " ||      IIIIIIIIIIIIIIIIIIIIIIIN♦!IIIIIIIIIII♦!!IIIIIIIIIIIIIIIIIIIIII    || "
+		echo " ||   IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII  || "
+		echo " || NNIIIIIIIIII!!!NNIIIIIIIIIIII!!IIIIIII!!NNNIIIIIIIIII!!IIIIIIIIIIIII!! || "
+		echo " || NNNNNIIIII!!!!!NNNNNNNIIII!!!!!NNNN♦!!!!NNNNNIIIIII!!!!NNNNIIIIII!!!!! || "
+		echo " || NNNNNNNN♦!!!!!!NNNNNNNN♦!!!!!!!NNNN♦!!!!NNNNNNNN♦!!!!!!NNNNNNN♦!!!!!!! || "
+		echo " || NNNNNNNN♦!!!!!!NNNNNNNN♦!!!!!!!NNNN♦!!!!NNNNNNNN♦!!!!!!NNNNNNN♦!!!!!!! || "
+		echo " || NNNNNNNN♦!!!!!!NNNNNNNN♦!!!!!!!NNNN♦!!!!NNNNNNNN♦!!!!!!NNNNNNN♦!!!!!!! || "
+		echo " || NNNNNNNN♦!!!!IIINNNNNNN♦!!!!!!! NNN♦!!!!NNNNNNNN♦!!!!!!NNNNNNN♦!!!!!!! || "
+		echo " || NNNNNNNN♦!!IIIIIIIIINNN♦!!!!!!!   N♦!!! NNNNNNNN♦!!!!IIIIINNNN♦!!!!!!! || "
+		echo " || NNNNNNNN♦IIIIIIIIIIIIIII!!!!!!!         NNNNNNNN♦IIIIIIIIIIIIII!!!!!!! || "
+		echo " || NNNNNNNNNNIIIIIIIIIIII!!!!!!!!!         NNNNNNNNNNIIIIIIIIIII!!!!!!!!! || "
+		echo " || NNNNNNNNNNNNNIIIIII!!!!!!!!!!!!         NNNNNNNNNNNNNIIIIII!!!!!!!!!!! || "
+		echo " || NNNNNNNNNNNNNN♦!!!!!!!!!!!!!!!           NNNNNNNNNNNNN♦!!!!!!!!!!!!!   || "
+		echo " ||   NNNNNNNNNNNN♦!!!!!!!!!!!!!               NNNNNNNNNNN♦!!!!!!!!!!!     || "
+		echo " ||      NNNNNNNNN♦!!!!!!!!!!!                   NNNNNNNNN♦!!!!!!!!!       || "
+		echo " ||        NNNNNNN♦!!!!!!!!!                       NNNNNNN♦!!!!!!!         || "
+		echo " ||           NNNN♦!!!!!!                            NNNNN♦!!!!!           || "
+		echo " ||             NN♦!!!                                 NNN♦!!!             || "
+		echo " ||                                                                        || "
+		echo " ||                                                                        || "
+		echo " ||                Mmmm, yyyeah, I'm gonna have to ask you                 || "
+		echo " ||                NOT to commit to a '$i' branch.$spaces|| "
+		echo " ||                                                                        || "
+		echo " ||   If you really need to, you can add --no-verify to the command.       || "
+		echo " ||                                                                        || "
+		echo " ||                                                                        || "
+		echo " ||    [ Brought to you by Initech, don't forget your TPS reports ]        || "
+		echo " ||                                                                        || "
+		echo " ============================================================================ "
+		
+		exit 1
+	fi
+done
+
+exit 0
