@@ -1,5 +1,5 @@
 
-// Test by running `./.git/hooks/pre-push` at the root of your repo
+// Test by running `{{escapeBackslashes gruntfileDirectory}}/.git/hooks/pre-push` (in your terminal)
 
 var exec = require('child_process').exec;
 var proc = exec('{{escapeBackslashes command}}{{#if task}} {{escapeBackslashes task}}{{/if}}{{#if args}} {{{escapeBackslashes args}}}{{/if}}', {
