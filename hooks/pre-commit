@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This pre-commit hook will prevent any commit to forbidden branches
 # (by default, "release", "master", & "develop").
@@ -11,11 +11,9 @@ declare -a FORBIDDEN_BRANCHES=("release" "master" "develop")
 branch=$(echo `git rev-parse --abbrev-ref=strict HEAD`)
 
 ## now loop through the above array
-for i in "${FORBIDDEN_BRANCHES[@]}"
-do
-	if [[ $branch =~ $i* ]] ;
-	then
-		len=`expr 27 - ${#i}`
+for i in "${FORBIDDEN_BRANCHES[@]}"; do
+	if [[ $branch =~ $i* ]]; then
+		len=`expr 25 - ${#i}`
 		spaces=""
 		for j in $(eval echo "{1..$len}"); do spaces+=" "; done
 		
@@ -56,7 +54,7 @@ do
 		echo " ||                                                                        || "
 		echo " ||                                                                        || "
 		echo " ||                Mmmm, yyyeah, I'm gonna have to ask you                 || "
-		echo " ||                NOT to commit to a '$i' branch.$spaces|| "
+		echo " ||                NOT to commit to the '$i' branch.$spaces|| "
 		echo " ||                                                                        || "
 		echo " ||   If you really need to, you can add --no-verify to the command.       || "
 		echo " ||                                                                        || "
@@ -68,11 +66,5 @@ do
 		exit 1
 	fi
 done
-
-# Add extra checks here ========================================================
-
-#exec "C:/path/to/repo/.git/hooks/node-hook"
-
-#===============================================================================
 
 exit 0
