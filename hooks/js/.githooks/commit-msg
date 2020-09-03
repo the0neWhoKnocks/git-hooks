@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+
+// Boilerplate #################################################################
+
+const color = (str, mods) => {
+  const tty = require('tty');
+  const colorize = /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(process.env.TERM) && tty.isatty(1);
+
+  if (colorize) {
+    const chars = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'].reduce((obj, color, index) => {
+      // foreground
+      obj[color] = `\x1b[${30 + index}m`;
+      obj[`${color}Bright`] = `\x1b[${90 + index}m`;
+      // background
+      obj[`bg${color[0].toUpperCase() + color.slice(1)}`] = `\x1b[${40 + index}m`;
+      obj[`bg${color[0].toUpperCase() + color.slice(1)}Bright`] = `\x1b[${100 + index}m`;
+
+      return obj;
+    }, {});
+    chars.bold = '\x1b[1m';
+    chars.reset = '\x1b[0m';
+
+    return `${mods.map(mod => chars[mod] ? chars[mod] : '').join('')}${str}${chars.reset}`;
+  }
+
+  return str;
+};
+
+const formatErrorMsg = (msg) => `${color(' ERROR ', ['yellow', 'bgRed', 'bold'])} ${color(msg, ['red'])}`;
+
+const git = (cmdArgs, cb) => {
+  const { execSync } = require('child_process');
+
+  try { return execSync(`git ${cmdArgs}`).toString(); }
+  catch (err) {
+    console.error(err);
+    return '';
+  }
+};
+
+// Hook Specific ###############################################################
+
+const { readFileSync } = require('fs');
+
+const commitTypes = [
+  'chore',
+  'ci',
+  'docs',
+  'feat',
+  'fix',
+  'refactor',
+  'revert',
+  'style',
+  'test',
+];
+const COMMIT_TITLE_REGEX = new RegExp(`^(${commitTypes.join('|')}): [\\w\\W]+`);
+const COMMIT_MSG = process.argv.slice(2)[0];
+let commitMsgs = [];
+
+// User just made a commit
+if (COMMIT_MSG) {
+  commitMsgs.push(readFileSync(COMMIT_MSG, 'utf8'));
+}
+// No single commit provided, iterate over all commits for the current branch
+else {
+  let branch = git('rev-parse --abbrev-ref HEAD');
+
+  if (branch) {
+    branch = branch.replace('\n', '');
+    let commits = git(`log --first-parent --no-merges origin/master..${branch} 2>&1 | cat`);
+    
+    if (commits) {
+      commitMsgs = commits
+        .split(/^commit [0-9a-z]{40}\n/gim) // break out commits into separate items
+        .filter(c => !!c) // remove any empty items
+        .map(c => {
+          return c
+            .substring(c.indexOf('\n\n') + 2) // get just the commit message
+            .split('\n')
+            .map(_c => _c.substring(4)) // trim leading space from every line
+            .join('\n');
+        });
+    }
+    else {
+      console.log(`\n ${formatErrorMsg(`No commits found on branch "${branch}"`)}`);
+      process.exit(1);
+    }
+  }
+}
+
+const badCommits = [];
+commitMsgs.forEach((commitMsg) => {
+  const commitMsgParts = commitMsg
+    .split('\n')
+    .filter(line => !line.startsWith('#'));
+  
+  if (!COMMIT_TITLE_REGEX.test(commitMsgParts[0])) badCommits.push(commitMsgParts.join('\n'));
+});
+
+if (badCommits.length) {
+  const errMsg = (badCommits.length > 1)
+    ? "Your commit messages don't meet our requirements."
+    : "Your commit message doesn't meet our requirements.";
+  let example  = 'Commit message template:';
+      example += '\n┌────────────────────────┐';
+      example += `\n│ ${color('<type>: <description>', ['cyan'])}  │`;
+      example += '\n│                        │';
+      example += `\n│ ${color('[<body>]', ['cyan'])}               │`;
+      example += '\n└────────────────────────┘';
+      example += `\n ${color('<type>', ['cyan'])} can be any one of these: ${commitTypes.map(t => color(t, ['green'])).join(', ')}`;
+  let badCommitsMsg = ' Bad commits\n';
+  badCommitsMsg += badCommits
+    .map(c => c
+      .split('\n')
+      .map((_c, ndx, arr) => {
+        let ret = '';
+        if (ndx === 0) ret += '┌────\n';
+        ret += `│ ${color(_c, ['yellow'])}`;
+        if (ndx === arr.length - 1) ret += '\n└─';
+        return ret;
+      })
+      .join('\n')
+    )
+    .join('\n');
+
+  console.log(`\n ${formatErrorMsg(errMsg)}\n\n ${example}\n\n${badCommitsMsg}`);
+  process.exit(1);
+}
