@@ -2,31 +2,30 @@
 
 // Boilerplate #################################################################
 
-const color = (str, mods) => {
+const color = (() => {
   const tty = require('tty');
   const colorize = /^screen|^xterm|^vt100|^vt220|^rxvt|color|ansi|cygwin|linux/i.test(process.env.TERM) && tty.isatty(1);
 
-  if (colorize) {
-    const chars = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'].reduce((obj, color, index) => {
+  function CLIColor(str = '') {
+    const RESET = colorize ? '\x1b[0m' : '';
+    const api = ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'].reduce((obj, color, index) => {
       // foreground
-      obj[color] = `\x1b[${30 + index}m`;
-      obj[`${color}Bright`] = `\x1b[${90 + index}m`;
+      obj[color] = { get() { return CLIColor(colorize ? `${str}\x1b[${30 + index}m` : str); } };
+      obj[`${color}Bright`] = { get() { return CLIColor(colorize ? `${str}\x1b[${90 + index}m` : str); } };
       // background
-      obj[`bg${color[0].toUpperCase() + color.slice(1)}`] = `\x1b[${40 + index}m`;
-      obj[`bg${color[0].toUpperCase() + color.slice(1)}Bright`] = `\x1b[${100 + index}m`;
+      obj[`bg${color[0].toUpperCase() + color.slice(1)}`] = { get() { return CLIColor(colorize ? `${str}\x1b[${40 + index}m` : str); } };
+      obj[`bg${color[0].toUpperCase() + color.slice(1)}Bright`] = { get() { return CLIColor(colorize ? `${str}\x1b[${100 + index}m` : str); } };
 
       return obj;
     }, {});
-    chars.bold = '\x1b[1m';
-    chars.reset = '\x1b[0m';
+    api.bold = { get() { return CLIColor(colorize ? `${str}\x1b[1m` : str); } };
 
-    return `${mods.map(mod => chars[mod] ? chars[mod] : '').join('')}${str}${chars.reset}`;
+    return Object.defineProperties(msg => `${str}${msg}${RESET}`, api);
   }
+  return new CLIColor();
+})();
 
-  return str;
-};
-
-const formatErrorMsg = (msg) => `${color(' ERROR ', ['yellow', 'bgRed', 'bold'])} ${color(msg, ['red'])}`;
+const formatErrorMsg = (msg) => `${color.yellow.bgRed.bold(' ERROR ')} ${color.red(msg)}`;
 
 const git = (cmdArgs, cb) => {
   const { execSync } = require('child_process');
@@ -103,19 +102,19 @@ if (badCommits.length) {
     : "Your commit message doesn't meet our requirements.";
   let example  = 'Commit message template:';
       example += '\n┌────────────────────────┐';
-      example += `\n│ ${color('<type>: <description>', ['cyan'])}  │`;
+      example += `\n│ ${color.cyan('<type>: <description>')}  │`;
       example += '\n│                        │';
-      example += `\n│ ${color('[<body>]', ['cyan'])}               │`;
+      example += `\n│ ${color.cyan('[<body>]')}               │`;
       example += '\n└────────────────────────┘';
-      example += `\n ${color('<type>', ['cyan'])} can be any one of these: ${commitTypes.map(t => color(t, ['green'])).join(', ')}`;
-  let badCommitsMsg = ' Bad commits\n';
+      example += `\n ${color.cyan('<type>')} can be any one of these: ${commitTypes.map(t => color.green(t)).join(', ')}`;
+  let badCommitsMsg = ' Bad commit(s)\n';
   badCommitsMsg += badCommits
     .map(c => c
       .split('\n')
       .map((_c, ndx, arr) => {
         let ret = '';
         if (ndx === 0) ret += '┌────\n';
-        ret += `│ ${color(_c, ['yellow'])}`;
+        ret += `│ ${color.yellow(_c)}`;
         if (ndx === arr.length - 1) ret += '\n└─';
         return ret;
       })
