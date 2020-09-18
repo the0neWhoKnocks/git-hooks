@@ -26,6 +26,7 @@ const color = (() => {
 })();
 
 const formatErrorMsg = (msg) => `${color.yellow.bgRed.bold(' ERROR ')} ${color.red(msg)}`;
+const formatWarningMsg = (msg) => `${color.black.bgYellow(' WARN ')} ${color.yellow(msg)}`;
 
 const git = (cmdArgs, cb) => {
   const { execSync } = require('child_process');
@@ -81,8 +82,7 @@ else {
         });
     }
     else {
-      console.log(`\n ${formatErrorMsg(`No commits found on branch "${branch}"`)}`);
-      process.exit(1);
+      console.log(`\n ${formatWarningMsg(`No commits found on branch "${branch}"\n        Skipping commit message validation`)}\n`);
     }
   }
 }
